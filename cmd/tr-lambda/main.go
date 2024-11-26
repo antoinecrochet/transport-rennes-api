@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	skill "github.com/acrochet95/transport-rennes-be/internal/alexa-skill"
-	db "github.com/acrochet95/transport-rennes-be/internal/dynamoDB"
+	skill "github.com/antoinecrochet/transport-rennes-be/internal/alexa-skill"
+	db "github.com/antoinecrochet/transport-rennes-be/internal/dynamoDB"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/dasjott/alexa-sdk-go"
 )
