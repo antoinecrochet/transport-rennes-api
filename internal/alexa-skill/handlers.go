@@ -5,8 +5,8 @@ import (
 	"sort"
 	"time"
 
-	db "github.com/acrochet95/transport-rennes-be/internal/dynamoDB"
-	"github.com/acrochet95/transport-rennes-be/internal/opendatasoft"
+	db "github.com/antoinecrochet/transport-rennes-be/internal/dynamoDB"
+	"github.com/antoinecrochet/transport-rennes-be/internal/opendatasoft"
 	"github.com/dasjott/alexa-sdk-go"
 )
 

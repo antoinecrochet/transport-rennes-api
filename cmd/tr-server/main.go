@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	api "github.com/acrochet95/transport-rennes-be/internal/transport-rennes-api"
+	api "github.com/antoinecrochet/transport-rennes-be/internal/transport-rennes-api"
 )
 
 func main() {
