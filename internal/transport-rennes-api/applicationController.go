@@ -39,6 +39,7 @@ func getUpcomingBus(w http.ResponseWriter, r *http.Request) {
 	// If no bus left
 	if upcomingBus.NHits == 0 {
 		json.NewEncoder(w).Encode(Message{"Aucun bus disponible"})
+		return
 	}
 
 	// sort records by departure time
