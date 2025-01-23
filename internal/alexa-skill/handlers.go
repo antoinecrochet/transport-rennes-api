@@ -13,7 +13,7 @@ import (
 var odsClient *opendatasoft.OpendatasoftClient
 
 func Initialize() {
-	config := opendatasoft.ODSConfig{BaseUrl: os.Getenv("OPENDATASOFT_BASE_URL"), ApiKey: os.Getenv("OPENDATASOFT_API_KEY")}
+	config := opendatasoft.ODSConfig{BaseUrl: os.Getenv("OPENDATASOFT_BASE_URL")}
 	odsClient = opendatasoft.New(config)
 }
 

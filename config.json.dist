@@ -1,4 +1,3 @@
 {
-    "base_url": "https://data.explore.star.fr",
-    "api_key": "YOUR_API_KEY"
+    "base_url": "https://data.explore.star.fr"
 }

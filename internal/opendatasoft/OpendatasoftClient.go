@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -38,13 +39,13 @@ func (ods *OpendatasoftClient) GetUpcomingBus(busLineName string, stopName strin
 
 	if destination == "" && busLineName == "" {
 		// Search bus by stop name
-		ods.getRequest(fmt.Sprintf(endpointOnlyStopName, stopName), &upcomingBus)
+		ods.getRequest(fmt.Sprintf(endpointOnlyStopName, url.QueryEscape(stopName)), &upcomingBus)
 	} else if destination == "" && busLineName != "" {
 		// Seach bus by bus line name and stop name
-		ods.getRequest(fmt.Sprintf(endpointAllButDestionation, busLineName, stopName), &upcomingBus)
+		ods.getRequest(fmt.Sprintf(endpointAllButDestionation, url.QueryEscape(busLineName), url.QueryEscape(stopName)), &upcomingBus)
 	} else {
 		// Seach bus by bus line name, destination and stop name
-		ods.getRequest(fmt.Sprintf(endpointAll, busLineName, stopName, destination), &upcomingBus)
+		ods.getRequest(fmt.Sprintf(endpointAll, url.QueryEscape(busLineName), url.QueryEscape(stopName), url.QueryEscape(destination)), &upcomingBus)
 	}
 
 	return &upcomingBus
@@ -53,7 +54,6 @@ func (ods *OpendatasoftClient) GetUpcomingBus(busLineName string, stopName strin
 // Get request to opendatasoft api
 func (ods *OpendatasoftClient) getRequest(request string, target interface{}) error {
 	req, _ := http.NewRequest("GET", ods.config.BaseUrl+request, nil)
-	req.Header.Set("Authorization", ods.config.ApiKey)
 	resp, err := ods.client.Do(req)
 	if err != nil {
 		log.Panic(err)
