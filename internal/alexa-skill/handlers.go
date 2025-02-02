@@ -6,7 +6,7 @@ import (
 	"time"
 
 	db "github.com/antoinecrochet/transport-rennes-be/internal/dynamoDB"
-	"github.com/antoinecrochet/transport-rennes-be/internal/opendatasoft"
+	"github.com/antoinecrochet/transport-rennes-be/opendatasoft"
 	"github.com/dasjott/alexa-sdk-go"
 )
 

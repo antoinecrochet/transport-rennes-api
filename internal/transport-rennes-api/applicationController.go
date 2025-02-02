@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/antoinecrochet/transport-rennes-be/internal/opendatasoft"
+	"github.com/antoinecrochet/transport-rennes-be/opendatasoft"
 )
 
 var odsClient *opendatasoft.OpendatasoftClient

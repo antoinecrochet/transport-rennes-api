@@ -61,8 +61,7 @@ Generate a config.json file next to the executable using the template (config.js
 
 ```json
 {
-   "base_url": "https://data.explore.star.fr",
-   "api_key": "YOUR_API_KEY"
+   "base_url": "https://data.explore.star.fr"
 }
 ```
 
