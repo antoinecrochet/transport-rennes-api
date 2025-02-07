@@ -1,33 +1,13 @@
-# Transport Rennes Backend
+# Transport Rennes API
 
-Back-end part of Alexa application for public transport at Rennes developped in Go.
+This project is a web application built with Go to retrieve upcoming buses from public transport in Rennes.
+It provides an opendatasoft client to retrieve data on public transport in Rennes (used in an alexa skill cf. transport-rennes-alexa repository).
 
-# Applications
-
-## tr-lambda
-
-AWS lambda for Alexa application.
-The project uses :
-* AWS Lambda SDK (https://github.com/aws/aws-lambda-go)
-* alexa-sdk-go (https://github.com/dasjott/alexa-sdk-go)
-
-### Build
-
-In PowerShell, run the following:
-
-```sh
-$env:GOOS = "linux"
-$env:CGO_ENABLED = "0"
-$env:GOARCH = "amd64"
-go build -o main .\cmd\tr-lambda\main.go
-~\Go\Bin\build-lambda-zip.exe -output main.zip main
-```
-
-Have a look at https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html for more information.
+# Application
 
 ## tr-server
 
-Restful server giving endpoint to get the upcomping buses according to:
+Web application exposing an api to get the upcomping buses according to:
 * the bus name (C1, C2...)
 * the bus stop (Metz Volney, République...)
 * the final destination (Chantepie, La Poterie...)

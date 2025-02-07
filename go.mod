@@ -1,4 +1,4 @@
-module github.com/antoinecrochet/transport-rennes-be
+module github.com/antoinecrochet/transport-rennes-api
 
 go 1.23.4
 
