@@ -9,7 +9,6 @@ import (
 // Json structure
 type ODSConfig struct {
 	BaseUrl string `json:"base_url"`
-	ApiKey  string `json:"api_key"`
 }
 
 var config *ODSConfig
