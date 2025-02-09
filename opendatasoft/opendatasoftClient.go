@@ -2,6 +2,7 @@ package opendatasoft
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -27,31 +28,37 @@ type OpendatasoftClient struct {
 
 // Create new instance of OpendatasoftClient
 func New(config ODSConfig) *OpendatasoftClient {
-	httpClient := OpendatasoftClient{}
-	httpClient.client = &http.Client{Timeout: 10 * time.Second}
-	httpClient.config = config
-
-	return &httpClient
+	return &OpendatasoftClient{
+		client: &http.Client{Timeout: 10 * time.Second},
+		config: config,
+	}
 }
 
-func (ods *OpendatasoftClient) GetUpcomingBus(busLineName string, stopName string, destination string) *UpcomingBus {
-	var upcomingBus UpcomingBus
-
-	if destination == "" && busLineName == "" {
-		// Search bus by stop name
-		ods.getRequest(fmt.Sprintf(endpointOnlyStopName, url.QueryEscape(stopName)), &upcomingBus)
-	} else if destination == "" && busLineName != "" {
-		// Seach bus by bus line name and stop name
-		ods.getRequest(fmt.Sprintf(endpointAllButDestionation, url.QueryEscape(busLineName), url.QueryEscape(stopName)), &upcomingBus)
-	} else {
-		// Seach bus by bus line name, destination and stop name
-		ods.getRequest(fmt.Sprintf(endpointAll, url.QueryEscape(busLineName), url.QueryEscape(stopName), url.QueryEscape(destination)), &upcomingBus)
+// Search upcoming bus in real time given bus line, stop name and destination
+// StopName is the only required parameter
+func (ods *OpendatasoftClient) SearchUpcomingBus(stopName string, busLineName string, destination string) (*UpcomingBus, error) {
+	if stopName == "" {
+		return nil, errors.New("stopName is required")
 	}
 
-	return &upcomingBus
+	var query string
+	if destination == "" && busLineName == "" {
+		// Search bus by stop name
+		query = fmt.Sprintf(endpointOnlyStopName, url.QueryEscape(stopName))
+	} else if destination == "" && busLineName != "" {
+		// Seach bus by bus line name and stop name
+		query = fmt.Sprintf(endpointAllButDestionation, url.QueryEscape(busLineName), url.QueryEscape(stopName))
+	} else {
+		// Seach bus by bus line name, destination and stop name
+		query = fmt.Sprintf(endpointAll, url.QueryEscape(busLineName), url.QueryEscape(stopName), url.QueryEscape(destination))
+	}
+
+	var upcomingBus UpcomingBus
+	err := ods.getRequest(query, &upcomingBus)
+	return &upcomingBus, err
 }
 
-// Get request to opendatasoft api
+// HTTP get request to opendatasoft api
 func (ods *OpendatasoftClient) getRequest(request string, target interface{}) error {
 	req, _ := http.NewRequest("GET", ods.config.BaseUrl+request, nil)
 	resp, err := ods.client.Do(req)
