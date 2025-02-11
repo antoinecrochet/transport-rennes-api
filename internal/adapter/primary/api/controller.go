@@ -9,19 +9,34 @@ import (
 	"time"
 
 	"github.com/antoinecrochet/transport-rennes-api/opendatasoft"
+	"github.com/gorilla/mux"
 )
 
-var odsClient *opendatasoft.OpendatasoftClient
+type Application struct {
+	odsClient opendatasoft.OpendatasoftClient
+	port      string
+}
 
-func InitializeServer() {
-	config := opendatasoft.ReadConfigFile("config.json")
-	log.Printf("%s", config.BaseUrl)
+// Application constructor
+func New(configurationFile string) *Application {
+	config := opendatasoft.ReadConfigFile(configurationFile)
+	return &Application{
+		odsClient: *opendatasoft.New(*config),
+		port:      "8080",
+	}
+}
 
-	odsClient = opendatasoft.New(*config)
+// Start application
+func (app *Application) Start() {
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/upcomingbus", app.getUpcomingBus).Methods("GET")
+
+	log.Printf("Starting application on port %s ...", app.port)
+	log.Fatal(http.ListenAndServe(":"+app.port, router))
 }
 
 // Get one apartment by ID
-func getUpcomingBus(w http.ResponseWriter, r *http.Request) {
+func (app *Application) getUpcomingBus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json;charset=UTF-8")
 
 	var data SearchBus
@@ -35,7 +50,7 @@ func getUpcomingBus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	upcomingBus := odsClient.GetUpcomingBus(data.BusLine, data.Stop, data.Destination)
+	upcomingBus := app.odsClient.GetUpcomingBus(data.BusLine, data.Stop, data.Destination)
 	// If no bus left
 	if upcomingBus.NHits == 0 {
 		json.NewEncoder(w).Encode(Message{"Aucun bus disponible"})
