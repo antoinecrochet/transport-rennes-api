@@ -7,30 +7,26 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 )
 
-const endpointAll string = "/api/records/1.0/search/?dataset=tco-bus-circulation-passages-tr" +
-	"&q=&facet=nomcourtligne&facet=destination&facet=precision&facet=arrte&facet=nomarret" +
-	"&refine.nomcourtligne=%s&refine.nomarret=%s&refine.destination=%s&refine.precision=Temps+réel"
+//go:generate mockgen -source=service.go -destination=mock/service.go
 
-const endpointAllButDestionation string = "/api/records/1.0/search/?dataset=tco-bus-circulation-passages-tr" +
-	"&q=&facet=nomcourtligne&facet=precision&facet=arrte&facet=nomarret&refine.nomcourtligne=%s" +
-	"&refine.nomarret=%s&refine.precision=Temps+réel"
-
-const endpointOnlyStopName string = "/api/records/1.0/search/?dataset=tco-bus-circulation-passages-tr" +
-	"&q=&facet=precision&facet=nomarret&refine.nomarret=%s&refine.precision=Temps+réel"
+type OpendatasoftClientInterface interface {
+	SearchUpcomingBus(stopName string, busLineName string, destination string) (*UpcomingBus, error)
+}
 
 type OpendatasoftClient struct {
 	client *http.Client
-	config ODSConfig
+	config *OpendatasoftConfig
 }
 
 // Create new instance of OpendatasoftClient
-func New(config ODSConfig) *OpendatasoftClient {
+func New(configurationFile string) *OpendatasoftClient {
 	return &OpendatasoftClient{
 		client: &http.Client{Timeout: 10 * time.Second},
-		config: config,
+		config: readConfigurationFile(configurationFile),
 	}
 }
 
@@ -44,13 +40,13 @@ func (ods *OpendatasoftClient) SearchUpcomingBus(stopName string, busLineName st
 	var query string
 	if destination == "" && busLineName == "" {
 		// Search bus by stop name
-		query = fmt.Sprintf(endpointOnlyStopName, url.QueryEscape(stopName))
+		query = fmt.Sprintf(endpointBusStop, url.QueryEscape(stopName))
 	} else if destination == "" && busLineName != "" {
 		// Seach bus by bus line name and stop name
-		query = fmt.Sprintf(endpointAllButDestionation, url.QueryEscape(busLineName), url.QueryEscape(stopName))
+		query = fmt.Sprintf(endpointBusLineAndBusStop, url.QueryEscape(busLineName), url.QueryEscape(stopName))
 	} else {
 		// Seach bus by bus line name, destination and stop name
-		query = fmt.Sprintf(endpointAll, url.QueryEscape(busLineName), url.QueryEscape(stopName), url.QueryEscape(destination))
+		query = fmt.Sprintf(endpointBusLineAndBusStopAndDestination, url.QueryEscape(busLineName), url.QueryEscape(stopName), url.QueryEscape(destination))
 	}
 
 	var upcomingBus UpcomingBus
@@ -70,4 +66,22 @@ func (ods *OpendatasoftClient) getRequest(request string, target interface{}) er
 
 	json.NewDecoder(resp.Body).Decode(&target)
 	return nil
+}
+
+// Read configuration file
+func readConfigurationFile(path string) *OpendatasoftConfig {
+	file, err := os.Open(path)
+	decoder := json.NewDecoder(file)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var config *OpendatasoftConfig
+	err2 := decoder.Decode(&config)
+	if err2 != nil {
+		log.Fatal("Error while parsing config.json: ", err)
+	}
+
+	return config
 }
