@@ -5,24 +5,23 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"sort"
 	"time"
 
-	"github.com/antoinecrochet/transport-rennes-api/opendatasoft"
+	"github.com/antoinecrochet/transport-rennes-api/internal/core/model"
+	"github.com/antoinecrochet/transport-rennes-api/internal/core/port"
 	"github.com/gorilla/mux"
 )
 
 type Application struct {
-	odsClient opendatasoft.OpendatasoftClient
-	port      string
+	search port.Search
+	port   string
 }
 
 // Application constructor
-func New(configurationFile string) *Application {
-	config := opendatasoft.ReadConfigFile(configurationFile)
+func NewApplication(search port.Search) *Application {
 	return &Application{
-		odsClient: *opendatasoft.New(*config),
-		port:      "8080",
+		search: search,
+		port:   "8080",
 	}
 }
 
@@ -35,7 +34,7 @@ func (app *Application) Start() {
 	log.Fatal(http.ListenAndServe(":"+app.port, router))
 }
 
-// Get one apartment by ID
+// Get upcoming bus
 func (app *Application) getUpcomingBus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json;charset=UTF-8")
 
@@ -46,37 +45,34 @@ func (app *Application) getUpcomingBus(w http.ResponseWriter, r *http.Request) {
 	// only the stop name is mandatory
 	if data.Stop == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	upcomingBus := app.odsClient.GetUpcomingBus(data.BusLine, data.Stop, data.Destination)
-	// If no bus left
-	if upcomingBus.NHits == 0 {
 		json.NewEncoder(w).Encode(Message{"Aucun bus disponible"})
 		return
 	}
 
-	// sort records by departure time
-	sort.SliceStable(upcomingBus.Records, func(i, j int) bool {
-		return upcomingBus.Records[i].Information.Departure.Before(upcomingBus.Records[j].Information.Departure)
-	})
+	result, _ := app.search.SearchUpcomingBus(data.BusLine, data.Stop, data.Destination)
+
+	w.WriteHeader(http.StatusOK)
+	// If no bus left
+	if result.Count == 0 {
+		json.NewEncoder(w).Encode(Message{"Aucun bus disponible"})
+		return
+	}
 
 	// store records by destionation
-	x := make(map[string][]opendatasoft.UpcomingBusRecord)
-	for _, record := range upcomingBus.Records {
-		x[record.Information.Destination] = append(x[record.Information.Destination], record)
+	x := make(map[string][]model.PublicTransport)
+	for _, record := range result.Hits {
+		x[record.Destination] = append(x[record.Destination], record)
 	}
 
 	// TODO: give next departure for each key of x map (destination)
 	// Generate message
 	message := Message{}
-	if upcomingBus.NHits >= 2 {
+	if result.Count >= 2 {
 		message.Message = fmt.Sprintf("Prochain bus dans %d min, le suivant dans %d min",
-			getDelay(&upcomingBus.Records[0].Information.Departure),
-			getDelay(&upcomingBus.Records[1].Information.Departure))
-	} else if upcomingBus.NHits == 1 {
-		message.Message = fmt.Sprintf("Prochain bus dans %d", getDelay(&upcomingBus.Records[0].Information.Departure))
+			getDelay(&result.Hits[0].Departure),
+			getDelay(&result.Hits[1].Departure))
+	} else if result.Count == 1 {
+		message.Message = fmt.Sprintf("Prochain bus dans %d", getDelay(&result.Hits[0].Departure))
 	}
 
 	json.NewEncoder(w).Encode(message)

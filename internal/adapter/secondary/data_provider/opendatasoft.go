@@ -9,7 +9,7 @@ type Opendatasoft struct {
 	client opendatasoft.OpendatasoftClientInterface
 }
 
-func New(configurationFile string) *Opendatasoft {
+func NewOpendatasoftClient(configurationFile string) *Opendatasoft {
 	return &Opendatasoft{
 		client: opendatasoft.New(configurationFile),
 	}
