@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/antoinecrochet/transport-rennes-api/internal/core/model"
 	"github.com/antoinecrochet/transport-rennes-api/internal/core/port"
 	"github.com/gorilla/mux"
 )
@@ -48,7 +49,8 @@ func (app *Application) searchUpcomingBus(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	result, err := app.search.SearchUpcomingBus(data.BusLine, data.Stop, data.Destination)
+	search := model.Search{BusLine: data.BusLine, BusStop: data.Stop, Destination: data.Destination}
+	result, err := app.search.SearchUpcomingBus(search)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(&Error{err.Error()})

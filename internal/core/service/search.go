@@ -18,12 +18,12 @@ func NewSearch(dataProvider port.DataProviderPort) *Search {
 	}
 }
 
-func (s *Search) SearchUpcomingBus(busLine string, stop string, destination string) (*model.SearchResult, error) {
-	if stop == "" {
+func (s *Search) SearchUpcomingBus(search model.Search) (*model.SearchResult, error) {
+	if search.BusStop == "" {
 		return nil, fmt.Errorf("stop bus is mandatory")
 	}
 
-	searchResult, err := s.dataProvider.SearchUpcomingPublicTransports(model.Search{BusLine: busLine, BusStop: stop, Destination: destination})
+	searchResult, err := s.dataProvider.SearchUpcomingPublicTransports(search)
 	// sort records by departure time
 	sort.SliceStable(searchResult.Hits, func(i, j int) bool {
 		return searchResult.Hits[i].Departure.Before(searchResult.Hits[j].Departure)
