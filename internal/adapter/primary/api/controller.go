@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/antoinecrochet/transport-rennes-api/internal/core/model"
 	"github.com/antoinecrochet/transport-rennes-api/internal/core/port"
 	"github.com/gorilla/mux"
 )
@@ -28,14 +27,14 @@ func NewApplication(search port.Search) *Application {
 // Start application
 func (app *Application) Start() {
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/upcomingbus", app.getUpcomingBus).Methods("GET")
+	router.HandleFunc("/search/upcomingbus", app.searchUpcomingBus).Methods("POST")
 
 	log.Printf("Starting application on port %s ...", app.port)
 	log.Fatal(http.ListenAndServe(":"+app.port, router))
 }
 
 // Get upcoming bus
-func (app *Application) getUpcomingBus(w http.ResponseWriter, r *http.Request) {
+func (app *Application) searchUpcomingBus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "application/json;charset=UTF-8")
 
 	var data SearchBus
@@ -45,37 +44,46 @@ func (app *Application) getUpcomingBus(w http.ResponseWriter, r *http.Request) {
 	// only the stop name is mandatory
 	if data.Stop == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(Message{"Aucun bus disponible"})
+		json.NewEncoder(w).Encode(&Error{"stop-field-missing"})
 		return
 	}
 
-	result, _ := app.search.SearchUpcomingBus(data.BusLine, data.Stop, data.Destination)
+	result, err := app.search.SearchUpcomingBus(data.BusLine, data.Stop, data.Destination)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(&Error{err.Error()})
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	// If no bus left
 	if result.Count == 0 {
-		json.NewEncoder(w).Encode(Message{"Aucun bus disponible"})
+		json.NewEncoder(w).Encode(&SearchUpcomingBusResponse{Message: "Aucun bus disponible", Count: result.Count, Hits: []HitResponse{}})
 		return
 	}
 
-	// store records by destionation
-	x := make(map[string][]model.PublicTransport)
-	for _, record := range result.Hits {
-		x[record.Destination] = append(x[record.Destination], record)
+	// Convert domain model into api model
+	hits := make([]HitResponse, len(result.Hits))
+	for i, element := range result.Hits {
+		hits[i] = HitResponse{
+			BusLineName: element.BusLineName,
+			BusStopName: element.BusStopName,
+			Destination: element.Destination,
+			Departure:   element.Departure,
+		}
 	}
 
-	// TODO: give next departure for each key of x map (destination)
 	// Generate message
-	message := Message{}
+	var message string
 	if result.Count >= 2 {
-		message.Message = fmt.Sprintf("Prochain bus dans %d min, le suivant dans %d min",
+		message = fmt.Sprintf("Prochain bus dans %d min, le suivant dans %d min",
 			getDelay(&result.Hits[0].Departure),
 			getDelay(&result.Hits[1].Departure))
 	} else if result.Count == 1 {
-		message.Message = fmt.Sprintf("Prochain bus dans %d", getDelay(&result.Hits[0].Departure))
+		message = fmt.Sprintf("Prochain bus dans %d", getDelay(&result.Hits[0].Departure))
 	}
 
-	json.NewEncoder(w).Encode(message)
+	json.NewEncoder(w).Encode(&SearchUpcomingBusResponse{Message: message, Count: result.Count, Hits: hits})
 }
 
 // Return delay before departure in minutes
