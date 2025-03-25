@@ -7,7 +7,7 @@ It provides an opendatasoft client to retrieve data on public transport in Renne
 
 ## tr-server
 
-Web application exposing an api to get the upcomping buses according to:
+Web application exposing an api to search for the upcomping buses according to:
 * the bus name (C1, C2...)
 * the bus stop (Metz Volney, République...)
 * the final destination (Chantepie, La Poterie...)
@@ -16,11 +16,11 @@ Only the bus stop is mandatory.
 
 ### API
 
-#### Upcoming bus
+#### Search upcoming bus
 
-Request `HTTP GET /upcomingbus`
+POST `/search/upcomingbus`
 
-* Input example
+Request body:
 ```json
 {
    "busline": "C1",
@@ -29,10 +29,32 @@ Request `HTTP GET /upcomingbus`
 }
 ```
 
-* Output
+Response body:
 ```json
 {
-   "message": "Prochain bus dans 29 min, le suivant dans 37 min"
+    "message": "Prochain bus dans 5 min, le suivant dans 6 min",
+    "totalCount": 14,
+    "hits": [
+        {
+            "busline": "C4",
+            "stop": "Beaulieu Chimie",
+            "departure": "2025-03-11T18:31:01Z",
+            "destination": "Grand Quartier"
+        },
+        {
+            "busline": "C4",
+            "stop": "Beaulieu Chimie",
+            "departure": "2025-03-11T18:31:27Z",
+            "destination": "ZA Saint-Sulpice"
+        },
+        {
+            "busline": "C4",
+            "stop": "Beaulieu Chimie",
+            "departure": "2025-03-11T18:39:27Z",
+            "destination": "ZA Saint-Sulpice"
+        },
+        ...
+    ]
 }
 ```
 

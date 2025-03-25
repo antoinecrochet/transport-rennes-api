@@ -28,3 +28,7 @@ type UpcomingBusInformation struct {
 	StopId               string    `json:"idarret"`
 	BusLineId            string    `json:"idligne"`
 }
+
+type OpendatasoftConfig struct {
+	BaseUrl string `json:"base_url"`
+}
